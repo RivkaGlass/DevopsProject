@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_FRONTEND = "devops-frontend"
+        IMAGE_BACKEND  = "devops-backend"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -9,28 +14,64 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Install Frontend') {
             steps {
-                sh 'docker compose build'
+                dir('frontend') {
+                    bat 'npm install'
+                }
+            }
+        }
+
+        stage('Build Frontend') {
+            steps {
+                dir('frontend') {
+                    bat 'npm run build'
+                }
+            }
+        }
+
+        stage('Install Backend') {
+            steps {
+                dir('backend') {
+                    bat 'pip install -r requirements.txt'
+                }
+            }
+        }
+
+        stage('Test Backend') {
+            steps {
+                dir('backend') {
+                    bat 'pytest'
+                }
+            }
+        }
+
+        stage('Build Docker Images') {
+            steps {
+                bat 'docker build -t devops-frontend ./frontend'
+                bat 'docker build -t devops-backend ./backend'
             }
         }
 
         stage('Run Containers') {
             steps {
-                sh 'docker compose up -d'
+                bat 'docker compose up -d --build'
             }
         }
+    }
 
-        stage('Test') {
-            steps {
-                echo 'Add your tests here'
-            }
+    post {
+        success {
+            echo 'Pipeline completed successfully'
         }
 
-        stage('Cleanup') {
-            steps {
-                sh 'docker compose down'
-            }
+        failure {
+            echo 'Pipeline failed'
+        }
+
+        always {
+            echo 'Cleaning workspace'
+            bat 'docker system prune -f'
         }
     }
 }
