@@ -75,3 +75,4 @@ pipeline {
         }
     }
 }
+>>>>>>> 245d02f3a02dccc2c73a20c1124db7c7376266e5:Jenkinsfile
