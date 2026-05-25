@@ -47,13 +47,29 @@ pipeline {
             }
         }
 
-        stage('Build Docker Images') {
+       stage('Build Docker Images') {
             steps {
-                bat 'docker build -t devops-frontend ./frontend'
-                bat 'docker build -t devops-backend ./backend'
+                bat 'docker build -t rivki4240/devops-frontend ./frontend'
+                bat 'docker build -t rivki4240/devops-backend ./backend'
             }
         }
 
+        stage('Push Docker Images') {
+            steps {
+            
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                
+                    bat 'docker login -u %DOCKER_USER% -p %DOCKER_PASS%'
+
+                    bat 'docker push rivki4240/devops-frontend'
+                    bat 'docker push rivki4240/devops-backend'
+                }
+            }
+        }
         stage('Run Containers') {
             steps {
                 bat 'docker compose up -d --build'
